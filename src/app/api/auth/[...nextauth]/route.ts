@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
+import GitHubProvider from "next-auth/providers/github";
 
 interface Credentials {
   email: string;
@@ -12,6 +13,10 @@ interface Credentials {
 
 const authOptions: NextAuthOptions = {
   providers: [
+    GitHubProvider({
+      clientId: process.env.GITHUB_ID!,
+      clientSecret: process.env.GITHUB_SECRET!,
+    }),
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
@@ -41,10 +46,10 @@ const authOptions: NextAuthOptions = {
     }),
   ],
 
-  // ✅ Store user after Google sign-in
+  // ✅ Store user after OAuth sign-in
   callbacks: {
     async signIn({ user, account }) {
-      if (account?.provider === "google") {
+      if (account?.provider === "google" || account?.provider === "github") {
         try {
           await connectMongoDB();
 
@@ -55,14 +60,14 @@ const authOptions: NextAuthOptions = {
               name: user.name,
               email: user.email,
               image: user.image,
-              password: "", // optional, since it's Google login
+              password: "", // optional, since it's OAuth login
             });
-            console.log("✅ Google user saved to DB");
+            console.log(`✅ ${account.provider} user saved to DB`);
           } else {
-            console.log("🔁 Google user already exists");
+            console.log(`🔁 ${account.provider} user already exists`);
           }
         } catch (error) {
-          console.error("Error saving Google user:", error);
+          console.error(`Error saving ${account.provider} user:`, error);
           return false;
         }
       }

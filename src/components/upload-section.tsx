@@ -31,23 +31,24 @@ export default function UploadSection() {
     const uploadedPaths: string[] = [];
 
     for (const file of files) {
-      const filePath = `pdfs/${Date.now()}_${file.name}`; // Unique filename
+      const fileName = `${Date.now()}_${file.name}`; // Simplified filename
 
       const { error } = await supabase.storage
         .from("pdfs")
-        .upload(filePath, file, {
-          cacheControl: "3600",
-          upsert: true,
+        .upload(fileName, file, {
+          cacheControl: "3600"
         });
 
       if (error) {
+        console.error("Supabase Upload Error:", error);
         setError(`Failed to upload ${file.name}: ${error.message}`);
         setUploading(false);
         return;
       }
 
-      // Generate public URL
-      const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/pdfs/${filePath}`;
+      // Generate public URL using Supabase helper
+      const { data } = supabase.storage.from("pdfs").getPublicUrl(fileName);
+      const publicUrl = data.publicUrl;
       uploadedPaths.push(publicUrl);
 
       try {
@@ -59,11 +60,11 @@ export default function UploadSection() {
           },
           body: JSON.stringify({ originalUrl: publicUrl }),
         });
-  
+
         if (!textResponse.ok) {
           throw new Error("Failed to extract text");
         }
-  
+
         const textData = await textResponse.json();
         if (textData.text) {
           setPdfText(textData.text); // Store the extracted text in state
@@ -86,9 +87,8 @@ export default function UploadSection() {
       {/* Drag & Drop Area */}
       <div
         {...getRootProps()}
-        className={`w-full p-10 text-center cursor-pointer rounded-md ${
-          isDragActive ? "border-blue-500 bg-blue-100" : "border-gray-300"
-        } border-2 border-dashed transition`}
+        className={`w-full p-10 text-center cursor-pointer rounded-md ${isDragActive ? "border-blue-500 bg-blue-100" : "border-gray-300"
+          } border-2 border-dashed transition`}
       >
         <input {...getInputProps()} />
         <UploadCloud className="mx-auto mb-4 h-10 w-10 text-gray-500" />
