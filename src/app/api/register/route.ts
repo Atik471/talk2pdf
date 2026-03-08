@@ -1,5 +1,4 @@
-import { connectMongoDB } from "@/lib/mongodb";
-import User from "@/models/user";
+import { supabase } from "@/lib/supabaseClient";
 import bcrypt from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -7,21 +6,24 @@ export async function POST(req: NextRequest) {
     try {
         const { name, email, password } = await req.json();
 
-        // console.log("Name:", name);
-        // console.log("Email:", email);
-        // console.log("Password:", password);
-
         const hashedPassword = await bcrypt.hash(password, 10);
-        await connectMongoDB();
-        await User.create({ name, email, password: hashedPassword });
+
+        const { error } = await supabase
+            .from("users")
+            .insert([
+                { name, email, password: hashedPassword }
+            ]);
+
+        if (error) throw error;
 
         return NextResponse.json(
             { message: "User registered." },
             { status: 201 }
         );
-    } catch {
+    } catch (error: any) {
+        console.error("Registration error:", error);
         return NextResponse.json(
-            { error: "Failed to create user" },
+            { error: error?.message || "Failed to create user" },
             { status: 500 }
         );
     }

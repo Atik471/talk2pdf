@@ -5,13 +5,15 @@ import { supabase } from "@/lib/supabaseClient";
 import { UploadCloud } from "lucide-react";
 import { useState } from "react";
 import { useDropzone } from "react-dropzone";
+import { useSession, getSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function UploadSection() {
+  const { data: session } = useSession();
+  const router = useRouter();
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState<boolean>(false);
-  const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [pdfText, setPdfText] = useState<string>("");
 
   // Handle file drop
   const onDrop = (acceptedFiles: File[]) => {
@@ -25,60 +27,66 @@ export default function UploadSection() {
 
   // Function to upload files to Supabase Storage
   const uploadFiles = async () => {
+    const currentSession = await getSession();
+    if (!currentSession?.user) {
+      setError("Please sign in to upload and chat with PDFs.");
+      return;
+    }
+
     setUploading(true);
     setError(null);
 
-    const uploadedPaths: string[] = [];
-
     for (const file of files) {
-      const fileName = `${Date.now()}_${file.name}`; // Simplified filename
+      const fileName = `${Date.now()}_${file.name}`;
 
-      const { error } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from("pdfs")
         .upload(fileName, file, {
           cacheControl: "3600"
         });
 
-      if (error) {
-        console.error("Supabase Upload Error:", error);
-        setError(`Failed to upload ${file.name}: ${error.message}`);
+      if (uploadError) {
+        console.error("Supabase Upload Error:", uploadError);
+        setError(`Failed to upload ${file.name}: ${uploadError.message}`);
         setUploading(false);
         return;
       }
 
-      // Generate public URL using Supabase helper
-      const { data } = supabase.storage.from("pdfs").getPublicUrl(fileName);
-      const publicUrl = data.publicUrl;
-      uploadedPaths.push(publicUrl);
+      const { data: urlData } = supabase.storage.from("pdfs").getPublicUrl(fileName);
+      const publicUrl = urlData.publicUrl;
 
       try {
-        // Call the API route to extract text from the uploaded PDF
-        const textResponse = await fetch("/api/extract-text", {
+        const ingestResponse = await fetch("/api/pdf-rag-ingest", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ originalUrl: publicUrl }),
+          body: JSON.stringify({
+            pdfUrl: publicUrl,
+            pdfName: file.name,
+            // @ts-ignore
+            userId: currentSession.user.id
+          }),
         });
 
-        if (!textResponse.ok) {
-          throw new Error("Failed to extract text");
+        if (!ingestResponse.ok) {
+          throw new Error("Failed to process PDF with RAG");
         }
 
-        const textData = await textResponse.json();
-        if (textData.text) {
-          setPdfText(textData.text); // Store the extracted text in state
-        } else {
-          setError("Failed to extract text from the PDF.");
-        }
+        const ingestData = await ingestResponse.json();
+
+        // Redirect to the new chat page
+        router.push(`/chat/${ingestData.chatId}`);
+
       } catch (err) {
-        setError("Error extracting text from the PDF.");
-        console.log(err);
+        setError("Error processing your PDF for chat. Please try again.");
+        console.error(err);
+        setUploading(false);
+        return;
       }
     }
 
-    setUploadedUrls(uploadedPaths);
-    setFiles([]); // Clear uploaded files
+    setFiles([]);
     setUploading(false);
   };
 
@@ -121,30 +129,6 @@ export default function UploadSection() {
         >
           {uploading ? "Uploading..." : "Upload PDFs"}
         </Button>
-      )}
-
-      {/* Uploaded Files URLs */}
-      {uploadedUrls.length > 0 && (
-        <div className="mt-4 w-full">
-          <h3 className="text-gray-700">Uploaded PDFs:</h3>
-          <ul className="text-sm text-blue-600">
-            {uploadedUrls.map((url, index) => (
-              <li key={index}>
-                <a href={url} target="_blank" rel="noopener noreferrer">
-                  {url}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Extracted Text */}
-      {pdfText && (
-        <div className="mt-4 w-full">
-          <h3 className="text-gray-700">Extracted Text from PDF:</h3>
-          <pre className="text-sm text-gray-800">{pdfText}</pre>
-        </div>
       )}
 
       {/* Error Message */}

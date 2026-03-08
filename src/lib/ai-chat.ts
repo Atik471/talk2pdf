@@ -1,11 +1,11 @@
-import { fetchDeepSeek } from "@/lib/openrouter";
+import { fetchDeepSeek, ChatMessage } from "@/lib/openrouter";
 
-export const getAIResponse = async (userPrompt: string) => {
+export const getAIResponse = async (messages: ChatMessage[]) => {
   try {
-    const response = await fetchDeepSeek(userPrompt);
-    return response; // Return the AI's answer
+    const response = await fetchDeepSeek(messages);
+    return response;
   } catch (error) {
     console.error("AI Fetch Error:", error);
-    throw new Error("Failed to fetch AI response.");
+    throw error;
   }
 };

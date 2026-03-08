@@ -5,21 +5,9 @@ import Image from "next/image";
 
 export default function Signup() {
   return (
-    <div className="grid min-h-svh lg:grid-cols-2">
-      <div className="flex flex-col gap-4 p-6 md:p-10">
-        <div className="flex flex-1 items-center justify-center">
-          <div className="w-full">
-            <SignupForm />
-          </div>
-        </div>
-      </div>
-      <div className="bg-muted relative hidden lg:block w-full h-full">
-        <Image
-          src={logo}
-          fill
-          style={{ objectFit: "cover" }}
-          alt="Description"
-        />
+    <div className="flex min-h-svh items-center justify-center bg-gray-50 dark:bg-[#0a0a0a]">
+      <div className="w-full max-w-md p-6">
+        <SignupForm />
       </div>
     </div>
   );
