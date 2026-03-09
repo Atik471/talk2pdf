@@ -20,10 +20,10 @@ export async function POST(req: NextRequest) {
             { message: "User registered." },
             { status: 201 }
         );
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Registration error:", error);
         return NextResponse.json(
-            { error: error?.message || "Failed to create user" },
+            { error: error instanceof Error ? error.message : "Failed to create user" },
             { status: 500 }
         );
     }
