@@ -108,6 +108,7 @@ export function LoginForm({
           <span>Login with Google</span>
         </Button> */}
         <Button
+          type="button"
           onClick={() =>
             signIn("google", {
               callbackUrl: "/", // 👈 redirect after successful login
