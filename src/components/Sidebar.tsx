@@ -2,23 +2,16 @@
 
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+
 import {
   File,
-  FolderPlus,
   Loader2,
   LogIn,
   MonitorCog,
@@ -34,7 +27,7 @@ import { useRouter } from "next/navigation";
 import * as React from "react";
 // Next auth
 // import { signOut } from "next-auth/react";
-import { useSession, getSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import UserInfo from "./UserInfo";
 
 interface SidebarProps {
@@ -45,7 +38,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
   const { setTheme, theme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
-  const [chats, setChats] = React.useState<any[]>([]);
+  const [chats, setChats] = React.useState<{ id: string; pdf_name: string }[]>([]);
   const [isUploading, setIsUploading] = React.useState(false);
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -102,7 +95,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
           body: JSON.stringify({
             pdfUrl: publicUrl,
             pdfName: file.name,
-            // @ts-ignore
+            // @ts-expect-error - next-auth session user id not typed
             userId: session?.user?.id
           }),
         });

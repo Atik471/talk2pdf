@@ -5,11 +5,11 @@ import { supabase } from "@/lib/supabaseClient";
 import { UploadCloud } from "lucide-react";
 import { useState } from "react";
 import { useDropzone } from "react-dropzone";
-import { useSession, getSession } from "next-auth/react";
+import { getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 export default function UploadSection() {
-  const { data: session } = useSession();
+
   const router = useRouter();
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState<boolean>(false);
@@ -64,7 +64,7 @@ export default function UploadSection() {
           body: JSON.stringify({
             pdfUrl: publicUrl,
             pdfName: file.name,
-            // @ts-ignore
+            // @ts-expect-error - next-auth session user id not typed
             userId: currentSession.user.id
           }),
         });
