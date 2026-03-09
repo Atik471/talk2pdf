@@ -1,7 +1,5 @@
 // ----------------------------------------------------SignUp page-------------------------------------------------------------------
-import logo from "@/app/assets/PDF.jpg";
 import { SignupForm } from "@/components/signup-form";
-import Image from "next/image";
 
 export default function Signup() {
   return (

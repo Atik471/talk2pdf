@@ -105,7 +105,7 @@ const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
-        // @ts-ignore
+        // @ts-expect-error - next-auth Session type doesn't include id by default
         session.user.id = token.id;
       }
       return session;

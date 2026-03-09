@@ -17,7 +17,7 @@ export interface Message {
 }
 
 interface ChatProps {
-    chatId: string;
+    chatId?: string;
 }
 
 export function Chat({ chatId }: ChatProps) {
@@ -143,7 +143,7 @@ export function Chat({ chatId }: ChatProps) {
         <div className="rounded-2xl border h-[95vh] flex flex-col justify-between bg-white dark:bg-[#171717]">
             <div className="p-4 border-b flex justify-between items-center bg-gray-50 dark:bg-gray-800 rounded-t-2xl">
                 <h2 className="font-semibold truncate max-w-[70%]">{pdfName || "Chatting with PDF"}</h2>
-                <span className="text-xs text-gray-500">ID: {chatId.slice(0, 8)}...</span>
+                <span className="text-xs text-gray-500">ID: {chatId?.slice(0, 8)}...</span>
             </div>
 
             <div className="p-6 overflow-auto" ref={containerRef}>
